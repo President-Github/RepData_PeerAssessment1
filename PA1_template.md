@@ -5,24 +5,19 @@ output:
     keep_md: true
 ---
 
-```{r settingoptions, include=FALSE}
-knitr::opts_chunk$set(echo=TRUE)
 
-#setwd("~/Coding-Repositries/R/Coursera/ReproducibleResearch")
-require(dplyr)
-require(ggplot2)
-require(lubridate)
-```
 
 
 ## Loading and preprocessing the data
-```{r} 
+
+```r
 activity_data<-read.csv(unz("activity.zip", "activity.csv"), stringsAsFactors = FALSE)%>%
   mutate(date = ymd(date))
 ```
 
 ## What is mean total number of steps taken per day?
-```{r}
+
+```r
 day_counts<-filter(activity_data,complete.cases(activity_data))%>%
   group_by(date)%>%
   mutate(day_total = sum(steps))%>%
@@ -31,16 +26,25 @@ day_counts<-filter(activity_data,complete.cases(activity_data))%>%
   unique()
 ggplot(day_counts,aes(x=day_total))+
   geom_histogram()
+```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```r
 day_mean_steps = round(mean(day_counts$day_total),1)
 day_median_steps = median(day_counts$day_total)
 ```
 
-The daily mean is `r as.character(day_mean_steps)` and the daily median is `r day_median_steps`.
+The daily mean is 10766.2 and the daily median is 10765.
 
 
 ## What is the average daily activity pattern?
-```{r}
+
+```r
 interval_avgs<-filter(activity_data,complete.cases(activity_data))%>%
   group_by(interval)%>%
   mutate(interval_avg_steps = mean(steps))%>%
@@ -49,16 +53,21 @@ interval_avgs<-filter(activity_data,complete.cases(activity_data))%>%
   unique()
 ggplot(interval_avgs,aes(x=interval, y=interval_avg_steps))+
   geom_line()
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+```r
 max_steps_interval = interval_avgs$interval[interval_avgs$interval_avg_steps
                                             == max(interval_avgs$interval_avg_steps)]
 ```
-The interval with the largest average number of steps is `r max_steps_interval`.
+The interval with the largest average number of steps is 835.
 
 ## Inputing missing values
-There are `r sum(complete.cases(activity_data))` rows with missing data in the raw data, these will be filled in using the average calculated for the intervals calculated previously.
+There are 15264 rows with missing data in the raw data, these will be filled in using the average calculated for the intervals calculated previously.
 
-```{r}
+
+```r
 filled_data<-mutate(activity_data, 
                     steps = ifelse(is.na(steps), 
                                    filter(interval_avgs, 
@@ -73,15 +82,24 @@ filled_data_day_totals<-group_by(filled_data, date)%>%
 
 ggplot(filled_data_day_totals,aes(x=day_total))+
   geom_histogram()
+```
 
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
 filled_day_mean_steps = round(mean(filled_data_day_totals$day_total),1)
 filled_day_median_steps = median(filled_data_day_totals$day_total)
 ```
 
-With the missing values filled, the new daily mean  is `r as.character(day_mean_steps)` and the new daily median is `r day_median_steps`. This is a change of `r filled_day_mean_steps - day_mean_steps` for the daily mean and `r as.character(filled_day_mean_steps- day_mean_steps)` for the median.
+With the missing values filled, the new daily mean  is 10766.2 and the new daily median is 10765. This is a change of 0 for the daily mean and 0 for the median.
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+
+```r
 filled_interval_avgs<-mutate(filled_data, day_type 
                              = as.factor(ifelse(weekdays(date) %in% c('Saturday', 'Sunday'),
                                                 'Weekend', 'Weekday')))%>%
@@ -93,8 +111,8 @@ filled_interval_avgs<-mutate(filled_data, day_type
 ggplot(filled_interval_avgs,aes(x=interval, y=avg_steps))+
   geom_line()+
   facet_grid(day_type ~ .)
-  
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 Yes, the steps tend to start later on weekends as people sleep in.
 
